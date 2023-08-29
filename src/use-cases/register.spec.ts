@@ -1,16 +1,21 @@
 // import { PrismaUsersRepository } from "src/repositories/prisma/prisma-users-repository";
-import { expect, describe, it } from "vitest";
+import { expect, describe, it, beforeEach } from "vitest";
 import { RegisterUseCase } from "./register";
 import { compare } from "bcryptjs";
 import { inMemoryUsersRepository } from "src/repositories/in-memory/in-memory-users-repository";
 import { UserAlreadyExistsError } from "./errors/user-already-exists";
 
-describe("Register use case", () => {
-  it("should be able to register", async () => {
-    const usersRepository = new inMemoryUsersRepository();
-    const registerUseCase = new RegisterUseCase(usersRepository);
+let usersRepository: inMemoryUsersRepository;
+let sut: RegisterUseCase;
 
-    const { user } = await registerUseCase.execute({
+describe("Register use case", () => {
+  beforeEach(() => {
+    usersRepository = new inMemoryUsersRepository();
+    sut = new RegisterUseCase(usersRepository);
+  });
+
+  it("should be able to register", async () => {
+    const { user } = await sut.execute({
       name: "John Doe",
       email: "johndoe@example.com",
       password: "123456",
@@ -20,27 +25,7 @@ describe("Register use case", () => {
   });
 
   it("should hash user password upon registration", async () => {
-    // const prismaUsersRepository = new PrismaUsersRepository();
-
-    const usersRepository = new inMemoryUsersRepository();
-    const registerUseCase = new RegisterUseCase(usersRepository);
-    //   {
-    //   async findByEmail(email) {
-    //     return null;
-    //   },
-
-    //   async create(data) {
-    //     return {
-    //       id: "user-1",
-    //       name: data.name,
-    //       email: data.email,
-    //       password_hash: data.password_hash,
-    //       created_at: new Date(),
-    //     };
-    //   },
-    // });
-
-    const { user } = await registerUseCase.execute({
+    const { user } = await sut.execute({
       name: "John Doe",
       email: "johndoe@example.com",
       password: "123456",
@@ -55,19 +40,16 @@ describe("Register use case", () => {
   });
 
   it("should not be able to register with same email twice", async () => {
-    const usersRepository = new inMemoryUsersRepository();
-    const registerUseCase = new RegisterUseCase(usersRepository);
-
     const email = "johndoe@example.com";
 
-    await registerUseCase.execute({
+    await sut.execute({
       name: "John Doe",
       email,
       password: "123456",
     });
 
     await expect(() =>
-      registerUseCase.execute({
+      sut.execute({
         name: "John Doe",
         email,
         password: "123456",
